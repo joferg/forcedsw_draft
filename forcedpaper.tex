@@ -50,7 +50,7 @@
 
 %% May use \\ to break lines in title:
 
-\title{adaptive mesh refinement in forced shallow water systems}
+\title{Assessing Adaptive Mesh Refinement (AMR) in a Forced Shallow Water Model with Moisture}
 
 %%% Enter authors' names, as you see in this example:
 %%% Use \correspondingauthor{} and \thanks{Current Affiliation:...}
@@ -65,30 +65,31 @@
 % and Author Two\thanks{Current affiliation: American Meteorological Society, 
     % 45 Beacon St., Boston, MA 02108.}}
 
-\authors{Author One\correspondingauthor{Dept., Institution, Address, City, State/Country.}}
+\authors{Jared O. Ferguson\correspondingauthor{Department of Climate and
+Space Sciences and Engineering, University of Michigan, 2455 Hayward,
+Ann Arbor, MI 48109, USA} and Christiane Jablonowski}
 
 %% Follow this form:
     % \affiliation{American Meteorological Society, 
     % Boston, Massachusetts.}
 
-\affiliation{}
+\affiliation{Department of Climate and Space Sciences and Engineering,
+University of Michigan, Ann Arbor, Michigan}
 
 %% Follow this form:
     %\email{latex@ametsoc.org}
 
-\email{}
+\email{joferg@umich.edu}
 
 %% If appropriate, add additional authors, different affiliations:
     %\extraauthor{Extra Author}
     %\extraaffil{Affiliation, City, State/Province, Country}
 
-%\extraauthor{}
-%\extraaffil{}
+\extraauthor{Hans Johansen, Peter McCorquodale}
+\extraaffil{Lawrence Berkeley National Laboratory, Berkeley,
+California}
 
-%% May repeat for a additional authors/affiliations:
 
-%\extraauthor{}
-%\extraaffil{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ABSTRACT
@@ -99,7 +100,8 @@
 % For BAMS authors only: If your article requires a Capsule Summary, please place the capsule text at the end of your abstract
 % and identify it as the capsule. Example: This is the end of the abstract. (Capsule Summary) This is the capsule summary. 
 
-\abstract{Enter the text of your abstract here.}
+\abstract{Two nonlinear forced shallow water test cases are implemented in a fourth-order finite volume dynamical core with adaptive mesh refinement (AMR) to investigate AMRÕs ability to track and resolve complex evolving features. Traditional shallow water test cases consists mainly of large-scale smooth flows that do not effectively test the multiscale abilities of variable resolution and AMR models to resolve sharp gradients and small-scale flows. Adding forcing mechanisms to the shallow water system to model key atmospheric processes adds complexity and creates small-scale dynamic features of interest that can serve as foci for dynamic refinement, while remaining simple enough to study key numerical components of a modelÕs dynamical core. The two shallow water forced test cases implemented in this paper are a strengthening vortex formed by convection-like forcing and a barotropic jet implemented in a moist-thermodynamic phase change model that triggers front-like cloud and precipitation features. Both test cases were run with a series of uniform resolutions and a variety of AMR tagging criteria. Key features in both test cases have a high sensitivity to model resolution but also structurally converge at high resolutions. The AMR simulations demonstrated that refinement can resolve key local features without requiring global high-resolution grids but results were sensitive to the refinement criteria. Criteria that triggered refinement early in a simulation performed the best while criteria that delayed refinement for several days required careful tuning of thresholds to improve results compared with uniform resolution simulations.
+}
 
 \begin{document}
 
@@ -227,7 +229,7 @@ the multiple levels of refinement and changing resolutions created by AMR.
  In addition, we seek to quantify improvements gained from AMR grids
  and determine effective refinement criteria.
 
-This chapter is organized as follows. Section \ref{sec:modelintro} provides a brief overview
+This paper is organized as follows. Section \ref{sec:modelintro} provides a brief overview
 of the finite volume model and the Chombo multiblock AMR techniques.
 Section \ref{sec:forcedvort} describes the shallow water equations
 with moist convective forcing and the strengthening vortex test case.
@@ -245,7 +247,14 @@ test case for uniform and AMR runs of varying resolution. The
   space and time. The model's AMR is based on the Chombo AMR 
   library \citep{Adams:2015gd} and an in-depth description of the model 
   dynamical core for the shallow-water equations on an equiangular cubed-sphere 
-  grid can be found in \cite{mccorquodale2015adaptive}. The model is mass 
+  grid can be found in \cite{mccorquodale2015adaptive}. 
+  The model uses a classical fourth-order Runge-Kutta (RK4) 
+  time discretization scheme. In the spatial domain, fourth-order 
+  accurate finite-volume discretization is implemented to compute 
+  flux averages on the faces of each cell. 
+  Additionally, a sixth-order 
+  diffusive operator is applied to smooth the flux calculations while still 
+  maintaining the scheme's fourth-order accuracy. The model is mass 
   conserving and conserves energy up to the temporal truncation error, when 
   limiters or explicit dissipation are not applied. 
   
@@ -256,24 +265,12 @@ test case for uniform and AMR runs of varying resolution. The
   The discrete resolution of the cubed-sphere grid is denoted by $c\{N_c\}$ 
   where $N_c$ is the number of grid cells in each direction on a panel. Several 
   properties of the equiangular cubed-sphere grid, including approximate grid 
-  spacings, are given in Table~\ref{tb:grids2} for resolutions used in this chapter.
-  
-  The model uses a classical fourth-order Runge-Kutta (RK4) 
-  time discretization scheme. in the spatial domain, fourth-order 
-  accurate finite-volume discretization is implemented to compute 
-  flux averages on the faces of each cell. In addition, a high-order 
-  least-squares interpolation is used to compute stencil operations near panel 
-  or block boundaries. The stencil operations create three layers of ghost cells 
-  at the panel edges to preserve the order of accuracy of the fluxes. 
-  At a panel edge, the fluxes for cell faces along the panel edge are calculated 
-  separately for each panel and are then averaged together. This mean value 
-  is taken as the flux for each face to ensure conservation. Additionally, a sixth-order 
-  diffusive operator is applied to smooth the flux calculations while still 
-  maintaining the scheme's fourth-order accuracy. 
-  
+  spacings, are given in Table~\ref{tb:grids2} for resolutions used in this paper.
+   
   Our mapped-multiblock AMR approach implements a hierarchy of 
-  nested grid levels of increasing resolution, using the numerical tools 
-  developed in the Chombo AMR library \citep{Adams:2015gd}. 
+  nested grid levels of increasing resolution. 
+  \cite{mccorquodale2015adaptive} and \cite{ferguson2016analyzing} 
+  both provide a detailed descriptions of the AMR technique. 
   The grid resolution of an AMR level is defined by its refinement ratio 
   to the grid resolution of the coarser level below it. Finer levels are 
   placed over regions where coarse cells have been marked (tagged) 
@@ -296,8 +293,7 @@ test case for uniform and AMR runs of varying resolution. The
   boundary fluxes at the finer level's edges are updated via a temporal 
   interpolation from the RK4 method. After the sub-cycling is complete, 
   the values on the coarse grid are updated from the solution on the 
-  finer grid.  \cite{mccorquodale2015adaptive} and \cite{ferguson2016analyzing} 
-  both provide more detailed descriptions of the AMR technique. 
+  finer grid.  
   
   The refinement criteria determine the regions over which additional 
   grid levels are placed based on user-selected threshold values for 
@@ -468,27 +464,11 @@ test case for uniform and AMR runs of varying resolution. The
   components for each vortex are derived from the geostrophic 
   wind balance so that
   \begin{equation}
-     \label{eq:uforce} u = -\frac{g}{af}\frac{\partial h}{\partial \phi} 
-     = \frac{2 g h_f}{a r_w^2 f} r \exp{\left(-\left(\frac{r}{r_w}\right)^2\right)}
-     \frac{\partial r}{\partial \phi}
-   \end{equation}
-  \begin{equation}
-     \label{eq:vforce} v = \frac{g}{af\cos\phi}\frac{\partial h}{\partial \lambda}
-     = \frac{-2 g h_f}{a r_w^2 f \cos\phi} r \exp{\left(-\left(\frac{r}{r_w}\right)^2\right)}
-     \frac{\partial r}{\partial \lambda}.
-   \end{equation}
+     \label{eq:uforce} u = -\frac{g}{af}\frac{\partial h}{\partial \phi} \ \ \ \mathrm{and} \ \ \ v = \frac{g}{af\cos\phi}\frac{\partial h}{\partial \lambda}.
+  \end{equation}
   The Coriolis parameter $f = 2 \Omega \sin \phi$ has the constant rotation rate
-  $\Omega = 7.292 \times 10^{-5}$ s$^{-1}$. The partial derivatives of the great circle 
-  distance with respect to spherical coordinates $\phi$ and $\lambda$ are
-  \begin{equation} 
-  	 \frac{\partial r}{\partial \phi} = \frac{\sin\phi_d\cos\phi - \cos\phi_d\sin\phi\cos\left(\lambda - \lambda_d\right)}
-	 {\sqrt{1 - \left(\sin\phi_d \sin\phi + \cos\phi_d\cos\phi\cos\left(\lambda-\lambda_d\right)\right)^2}}
-  \end{equation}
-  and
-  \begin{equation}
-  	\frac{\partial r}{\partial \lambda} = \frac{\cos\phi_c\cos\phi\sin\left(\lambda_d - \lambda\right)}
-	{\sqrt{1 - \left(\sin\phi_d \sin\phi + \cos\phi_d\cos\phi\cos\left(\lambda-\lambda_d\right)\right)^2}}.
-  \end{equation}
+  $\Omega = 7.292 \times 10^{-5}$ s$^{-1}$ while the complete derivatives for the height
+  field $h$ are presented in Chapter 3 of \cite{ferguson:2018phd}.
   This initialization of the weak vortices is not perfectly balanced on the sphere and 
   will cause the creation of some gravity waves. However, there is no need to further balance
   these initial conditions due to the effects of convective forcing 
@@ -534,20 +514,13 @@ test case for uniform and AMR runs of varying resolution. The
    $Q_f=0.0175$. These values result in an initial wind magnitude peak of $ 5.7$ m s$^{-1}$ and 
    a peak moisture value of 0.83\% above the saturation value $Q_s$. The initial vorticity 
    profile is depicted in Fig. \ref{fig:c2048_vortseries}a. In addition, we initialize 
-   a non-symmetric binary pair of vortices $90^\circ$ east of the isolated vortex. These vortices 
-   interact with each other as they strengthen but do not merge. Each has the same size 
-   and strength as the first vortex and but a lower level of supersaturation. 
-    The second vortex is centered at
-   $(\phi_d =10^\circ , \lambda_d = 90^\circ)$ with $Q_f=0.015$ and the third is
-   at $(10^\circ , 105^\circ)$ with $Q_f=0.0125$.
+   a non-symmetric binary pair of vortices $90^\circ$ east of the isolated vortex.
    The two additional vortices have little effect on the 
    evolution of the isolated main vortex during the first twelve days of simulation. They are added
    to the test case to help form a complex chaotic global flow approximately 14 days into the simulation. 
-   This analysis and discussion is focused on the single 
-   isolated vortex during the initial twelve days; the extended-time (up to 16 days) 
-   results focusing on all three vortices are discussed in detail
-   in Section \ref{sec:extended}. 
-    
+   The extended-time (up to 16 days) 
+   results focusing on all three vortices are discussed in detail in \cite{ferguson:2018phd}.
+       
    Initial supersaturation triggers convection immediately, 
    creating convergence at the vortex center and driving vortex strengthening.
    The evolution of the vortex's relative vorticity
@@ -558,11 +531,12 @@ test case for uniform and AMR runs of varying resolution. The
    strengthens more rapidly from this point. By the eighth day of the simulation the maximum winds 
    are $31.2$ m s$^{-1}$ and by day 10 they are $69.0$ m s$^{-1}$. 
    
-   A key feature that 
-   develops around day 4 is a symmetric ring of maximum vorticity. This ring can be clearly 
-   seen at days 6, 7, and 8 (Figs. \ref{fig:c2048_vortseries}d-f). As the vortex intensifies more rapidly, this symmetric ring becomes elongated, as
-   seen at day 8 in Fig. \ref{fig:c2048_vortseries}f. The unstable elongated ring 
-   collapses and the filaments of large positive vorticity begin to collate,
+   In its structural evolutional, the vortex
+   develops a symmetric ring of maximum vorticity around day 4. This ring can be clearly 
+   seen at days 6, and 7 (Figs. \ref{fig:c2048_vortseries}d and e). 
+   As the vortex rapidly intensifies, this symmetric ring becomes elongated, as
+   seen at day 8 in Fig. \ref{fig:c2048_vortseries}f and collaspes. 
+   The filaments of large positive vorticity then begin to collate,
    creating a concentrated area of maximum vorticity (day 9, Fig. \ref{fig:c2048_vortseries}g). 
    A small section of the vorticity filament is not reincorporated into the center spirals
    of the main vortex (day 10, Fig. \ref{fig:c2048_vortseries}h), becoming a separate,
@@ -580,18 +554,10 @@ test case for uniform and AMR runs of varying resolution. The
    fields (Figs. \ref{fig:c2048_day8}b,c). The ocean-like reservoir of available moisture 
    for evaporation is plotted in Fig. \ref{fig:c2048_day8}d. The area of low reservoir levels
    to the southeast of the vortex shows where evaporation has been the strongest and
-   reflects the path of the vortex.
-   
-    The same fields are depicted
-   for day 10 in Fig. \ref{fig:c2048_day10}. The height has decreased to a minimum of $3400$ m.
-   As in the vorticity profile in Fig. \ref{fig:c2048_vortseries}h, the wind magnitude profile in 
-   Fig. \ref{fig:c2048_day10}b has begun to re-form a cyclone-like profile with a central calm eye
-   surrounded by a ring of maximum winds. However, the precipitation rate 
-   (Fig. \ref{fig:c2048_day10}c) does not reform a symmetric ring, and precipitation is limited
-   in the southeastern sector of the vortex due to a lack of additional moisture
-   being evaporated. As seen in Fig. \ref{fig:c2048_day10}d, the available moisture
-   for evaporation in that area has been depleted. This lack of moisture for evaporation suppresses 
-   convection and vortex strengthening. A comparable real world effect is
+   reflects the path of the vortex. By day 10, the available moisture
+   for evaporation in that area has been depleted. 
+   This lack of moisture for evaporation suppresses 
+   convection, precipitation, and vortex strengthening. A comparable real world effect is
    the cold wake reduction in ocean surface heat content that forms 
    behind the path of tropical cyclones due to the cyclone wind induced surface layer mixing.  
    The main vortex strengthen more slowly
@@ -617,7 +583,7 @@ across all resolutions and, when met, all the AMR levels are added simultaneousl
 The second version is a scaled threshold that increases with the level's resolution.
 In this setup, one level of refinement is implemented when the threshold value is met, but
 the next level of AMR is not added until a new, higher threshold value scaled with the increasing resolution is reached.
-For example, a three level AMR run with x4 refinement, a base resolution of $c32$, 
+For example, a three level AMR run with x4 refinement, a base resolution of c$32$, 
 and a vorticity tag threshold of 
 $|\zeta| > 2$ days$^{-1} = 2.3 \times 10^{-5}$ s$^{-1}$ will implement
 the first AMR level at a c128 resolution once that threshold has been exceeded. With this new
@@ -641,35 +607,29 @@ The four tagging criteria are:
         with a base level threshold of 
         $|\zeta| > 3$ days$^{-1} = 3.5 \times 10^{-5}$ s$^{-1}$
      \item
-        Tag 3: a vorticity threshold that scales with resolution 
-        with a base level threshold of 
-        $|\zeta| > 8$ days $^{-1} = 9.3 \times 10^{-5}$ s$^{-1}$
-     \item
-        Tag 4: a constant threshold across all AMR levels for vorticity of 
+        Tag 3: a constant threshold across all AMR levels for vorticity of 
         $|\zeta| > 5$ days $^{-1} = 5.8 \times 10^{-5}$ s$^{-1}$.
 \end{itemize}
-The higher vorticity threshold in Tag 4 compared to the scaled thresholds in 
+The higher vorticity threshold in Tag 3 compared to the scaled thresholds in 
 Tags 1 and 2 attempts to reduce the computational cost of the constant threshold
-method and make the model more comparable to that of the scaled threshold methods. Tag 3 simply increases 
-the threshold by four times that of Tag 1 so that a c32 base level AMR with x4 refinement
-using Tag 1 will have the same threshold of refinement for its second level of AMR as a c128 base level
-AMR using Tag 3 has for its first level of AMR.
-
+method and make the model more comparable to that of the scaled threshold methods.
 We focus on the vorticity field in this analysis, as it contains a combination of large-scale 
-and fine-scale structures and is sensitive to changes in resolution. The height and
-velocity fields have fewer small-scale features and the minimum height and maximum wind
-associated with the main vortex correlate well to the vorticity strength. The precipitation
-field is also larger in scale and has little variability with resolution.
+and fine-scale structures and is sensitive to changes in resolution.
 
 Focusing on the single isolated vortex, Fig. \ref{fig:vort_lineplot} depicts the growth of the vortex with a daily
 maximum magnitude of relative vorticity for uniform resolution runs (Fig.
-\ref{fig:vort_lineplot}a), AMR runs using tags 1 and 3 (Fig. \ref{fig:vort_lineplot}b), AMR runs 
-with tag 2 (Fig. \ref{fig:vort_lineplot}c), and AMR runs with tag 4 (Fig. \ref{fig:vort_lineplot}d).
+\ref{fig:vort_lineplot}a), AMR runs using tags 1 (Fig. \ref{fig:vort_lineplot}b), AMR runs 
+with tag 2 (Fig. \ref{fig:vort_lineplot}c), and AMR runs with Tag 3 (Fig. \ref{fig:vort_lineplot}d).
 The line color for each AMR run corresponds to base level resolution while the line style corresponds
 to the resolution of the highest AMR level. The uniform runs in Fig. \ref{fig:vort_lineplot} serve as the
-reference for the color and style of each resolution. 
+reference for the color and style of each resolution. The line color and
+style for each resolution is as follows: c2048 (black, solid line), c1024 (blue, diamond marker),
+c512 (green, small circle markers), c256 (red, dot-dash line), and c128 (orange, dotted line).
+The coarse resolutions c64 and c32 have only a line color, light blue and pink respectively, and
+no line style as none of the AMR runs have a highest refinement at these resolutions given that
+the vortex does not develop on such a coarse grid (as seen by the c64 uniform run in Fig. \ref{fig:vort_lineplot}a).
 
-Overall vortices with higher resolution have larger
+Vortices in higher resolution runs have larger
 maximum vorticity over the first nine days. The c64 resolution has not strengthened, nor has
 the c32 resolution, which is not plotted in Fig. \ref{fig:vort_lineplot}a. 
 In these cases, the grid resolution is
@@ -679,179 +639,166 @@ more rapidly after day 9 than higher resolution runs such
 that its maximum vorticity is higher than the c512 and c1024 runs by day 12.  Over the same time 
 period we see that the c512 and higher resolution runs reach a peak strength between day 11 and day 12
 before slowly decreasing, observing a regime change that the coarser resolution c256 and c128 are not
-able to resolve. This regime change can be seen in Fig. \ref{fig:uni_d9nd12}, which 
+able to resolve. 
+
+This regime change can be seen in Fig. \ref{fig:uni_d9nd12}, which 
 depicts the relative vorticity field for uniform runs c256, c512, and c1024 at day 9 in
 Figs. \ref{fig:uni_d9nd12} (a)-(c) and day 12 in Figs. \ref{fig:uni_d9nd12}(d)-(f).
-
-Comparing day 9 in Fig. \ref{fig:uni_d9nd12} and Fig. \ref{fig:c2048_vortseries}g,
-the strength of the vortex is clearly dependent on resolution, as the maximum vorticity
-increases with each resolution. The structure of the vortex, however, visually 
-converges. The ring collapse and roll-up seen at day 9 in the 
-uniform c2048 run in Fig. \ref{fig:c2048_vortseries}g
-is also observed in the c1024 run (Fig. \ref{fig:uni_d9nd12}c) 
-despite the slightly weaker maximum vorticity.
-The weaker vortex of the uniform c512 run results in a delay of the 
-stretching and collapse of the vortex ring. In Fig. \ref{fig:uni_d9nd12}b,
-the vortex is stretched, but the roll-up has not begun. The ring
-structure is still visible but less distinct as in the higher resolution runs.
-In the uniform c256 run the vortex does not form a distinct vortex ring structure 
-and continues to strengthen at day 9 without a significant
-change to its structure. (Fig. \ref{fig:uni_d9nd12}a).
-
-By day 12, the c1024 vorticity filaments have rolled back up into a single vortex and spun off
-a smaller secondary vortex with a vorticity dipole feature. The field is visually
-similar to the c2048 run at day 12 in Fig. \ref{fig:c2048_vortseries}i, 
-albeit slightly weaker overall and thus less northward by day 12. 
-Since the c256 run did not undergo the collapse and roll-up,
-its maximum vorticity at day 12 in Fig. \ref{fig:uni_d9nd12}d is now stronger 
-than that of the c512 and c1024 vortices.  In addition, no secondary vortex develops.
-The uniform c128 run follows a similar, though weaker evolution, so it is not shown here. 
-For the c512 uniform run at day 12 in Fig. \ref{fig:uni_d9nd12}e, a secondary vortex has spun off 
-(centered around $(25^\circ N, -3^\circ W)$ but is significantly weaker than the secondary vortices 
-in the c1024 and c2048 runs. In addition, one of the two anticyclonic regions that abut the main 
-vortex in the c1024 and c2048 runs has been spun off as well. Figure \ref{fig:uni_d9nd12}
-shows these two different regimes are dependent on resolution. At resolutions c256 and below
+ At resolutions c256 and below
 the development of a distinct vortex ring and its collapse cannot be resolved. The c512
 resolution appears to be the start of the high resolution regime, 
 which begins to converge between the c1024 and c2048 resolution runs.
+And though the maximum vorticity continues increasing with resolution, 
+the structure of the vortex visually converges. The collapse and roll-up of 
+the vortex at day 9 of the c1024 resolution run (Fig. \ref{fig:uni_d9nd12}c)
+and the structure of the main and secondary vortices at day 12 (Fig. \ref{fig:uni_d9nd12}f)
+are visually similar to the c2048 resolution run (Figs. \ref{fig:c2048_vortseries}g and i, respectively),
+albeit with a slightly weaker maximum vorticity. The delay in the collapse of the weaker 
+uniform c512 vortex at day 9 is seen in  Fig. \ref{fig:uni_d9nd12}b. 
+The vortex is stretched and the ring structure is visible though less 
+distinct than in the higher resolutions but the roll-up has not yet begun.
+By day 12 in the c512 uniform run (Fig. \ref{fig:uni_d9nd12}e),
+a secondary vortex has spun off (centered around $(25^\circ N, -3^\circ W)$. 
+It is significantly weaker than the secondary vortices 
+in the c1024 and c2048 runs and one of the two anticyclonic regions that abut the main 
+vortex in the c1024 and c2048 runs has also spun off from the main vortex.
+The uniform c256 resolution is unable to resolve the distinct vortex ring structure 
+and thus the vortex does not undergo a collapse and roll-up 
+(Fig. \ref{fig:uni_d9nd12}a), so that by day 12 
+(Fig. \ref{fig:uni_d9nd12}d) it is now stronger 
+than that of the c512 and c1024 vortices.  
+In addition, no secondary vortex develops.
 
-The AMR runs shown in Figs. \ref{fig:vort_lineplot}(b)-(d) do an 
-effective job of following the growth trajectory of uniform run with the same resolution as 
-the finest AMR level with a few exceptions. 
-However, several AMR maximum vorticity values remain lower than the corresponding uniform run.
-This occurs because the higher resolution refinement is not implemented early enough in the simulation,
-resulting in the lower strength observed in the uniform c256 and lower resolutions runs.
-This can be seen in the c128/c512/c2048 AMR with Tag 4 in Fig. \ref{fig:vort_lineplot}d.
-The refinement levels in that run are triggered at day 2, and the resulting delay
-causes the maximum strength to remain below the uniform c2048 level throughout
-the thirteen days of the simulation. The largest divergence occurs for the c32 AMR runs
-with Tag 1 and c128 AMR runs with Tag 3 in Fig. \ref{fig:vort_lineplot}b. 
-The two runs with the highest AMR level of c2048 have a maximum vorticity
-nearly 40\% weaker at day 12 than the uniform c2048 run. The other two AMR runs, with a highest
-AMR level of c512, are approximately 25\% weaker than the c512 uniform vortex. These runs also 
+For AMR, Figs. \ref{fig:vort_lineplot}(b)-(d) show that the
+AMR runs are able to follow the growth trajectory of
+uniform runs with the same resolution as the finest AMR level.
+AMR runs, where refinement occurs within the first day, are able to match the maximum vorticity
+of the uniform AMR runs. The c256/c1024 Tag and 2 AMR runs in Figs. \ref{fig:vort_lineplot}b
+and c respectively as well as the c512 base resolution AMR runs fit this category.
+The maximum relative vorticity
+for several other AMR runs remain slightly lower than the corresponding uniform run
+because the higher resolution refinement is triggered several days into the simulation. 
+This delay can be seen in the c128/c512/c2048 AMR with Tag 3 in Fig. \ref{fig:vort_lineplot}d.
+The c512 and c2048 refinement levels in that run are not triggered until after day 2.
+The key exceptions to this trend are the c32 AMR runs
+with Tag 1 in Fig. \ref{fig:vort_lineplot}b. 
+The four level AMR run, with a highest level of c2048, has a maximum vorticity
+nearly 40\% weaker at day 12 than the uniform c2048 run. The other three level AMR runs, with a highest
+AMR level of c512, is approximately 25\% weaker than the c512 uniform vortex. These runs also 
 follow the low resolution regime more closely than the regime expected by their highest AMR level. 
-All four of these runs begin with a highest resolution of c128, as the Tag 1 threshold for c32 AMR runs 
-triggers the c128 level of refinement immediately at initialization.  However, for both the c32 AMR Tag 1 runs
-and the c128 Tag 3 runs, the c512 AMR level is not triggered until six and a half days into the simulation,
-and the two runs which reach the c2048 level resolution do not trigger it until day 10. As a result, the model benefits
+For these runs, only the c128 refinement level is triggered at initialization.
+The c512 AMR level is not triggered until six and a half days into the simulation,
+and the c2048 level resolution is not triggered until day 10. As a result, the model benefits
 of instituting this higher resolution occur too late in the simulation. As Fig. \ref{fig:vort_lineplot}b shows, these four
-runs do not diverge from the c128 uniform run until
-day 9. In other AMR setups, the delayed implementation of
-the highest AMR resolution does not degrade the growth 
-of the vortex strength. For the c64/c256/c1024 AMR 
+runs do not diverge from the c128 uniform run until day 9. 
+In other AMR setups, the implementation of
+the highest AMR resolution, though delayed,
+allows the vortex to strengthen rapidly
+and results in comparable vortex strength by the end of the simulation.
+For the c64/c256/c1024 AMR 
 runs with Tag 1 and Tag 2 refinement, the first refinement 
 level of c256 resolution is triggered initially.
 The second c1024 level, however, is not triggered until 
-after five days or seven days, for Tag 1 and Tag 2, respectively.  
+day 5 for Tag 1 and day 7 for Tag 2.  
 As a result, we observe that the c64 AMR run with Tag 1 in 
 Fig. \ref{fig:vort_lineplot}b does not diverge from the uniform c256
-run until after day 7, and in Fig. \ref{fig:vort_lineplot}c 
+run's trajectory until after day 7, and in Fig. \ref{fig:vort_lineplot}c 
 the c64 Tag 2 AMR run does not diverge until after day 8.
 Both, however, follow the c1024 maximum vorticity closely by day 10.
 Though delayed, the refinement still occurs before the rapid intensification period during which
 the developing vortex becomes unstable and collapses. 
 Thus these two runs are able to more successfully
-match the c1024 uniform results than the c32 Tag 1 AMR 
-runs. In the cases of the c512/c2048 AMR runs, the AMR results in a 
-slightly higher maximum vorticity than the corresponding 
-uniform run between day 10 and day 12 using 
-Tag 2 (Fig. \ref{fig:vort_lineplot}c) and Tag 4 (Fig. \ref{fig:vort_lineplot}d)  
-as well as with the c256/c1024 AMR run using Tag 2 (Fig. \ref{fig:vort_lineplot}c).
+match the high resolution uniform results than the c32 Tag 1 AMR 
+runs.
 
 Figures \ref{fig:vort_amr_day9} and \ref{fig:vort_amr_day12} depict the relative 
 vorticity field for day 9 and day 12 respectively for nine AMR runs. They provide 
 a more detailed comparison of the overall vortex and the small-scale features in the 
 vorticity field between the AMR runs and the uniform resolution runs in 
-Fig. \ref{fig:c2048_vortseries} and Fig. \ref{fig:uni_d9nd12}. At day 9, the selected
-AMR runs in Fig. \ref{fig:vort_amr_day9} are at various stages of the 
-evolution process, depending on their resolutions and tagging criteria. As in 
+Fig. \ref{fig:c2048_vortseries} and Fig. \ref{fig:uni_d9nd12}. At day 9 as in 
 Fig. \ref{fig:vort_lineplot}b, the c32 base 4-level AMR with Tag 1 run (Fig. 
-\ref{fig:vort_amr_day9}a) and the c128 2-level AMR with Tag 3 run (Fig.
-\ref{fig:vort_amr_day9}b) are significantly weaker than the uniform c2048 run
-at day 9 (Fig. \ref{fig:c2048_vortseries}g). The highest level of AMR for both runs, c2048,
-has not yet been triggered, and both runs use c512 resolution over the vortex.
- The evolution of the vortex corresponds to the high resolution regime, albeit delayed, with the clearly visible
- vortex ring. Figures \ref{fig:vort_amr_day9}a and b are more comparable to
+\ref{fig:vort_amr_day9}a) is significantly weaker than the uniform c2048 run
+at day 9 (Fig. \ref{fig:c2048_vortseries}g). The highest level of AMR, c2048,
+has not yet been triggered. The clearly visible vortex ring does correspond to the 
+high resolution regime, albeit delayed several days and is more comparable to
 the c2048 uniform run at day 6 (Fig. \ref{fig:c2048_vortseries}d). Though not as pronounced,
 the two c64 based AMR runs are also delayed in their vortex evolution. The c64 2-level AMR runs
-with Tag 1 (\ref{fig:vort_amr_day9}d) and Tag 2  (\ref{fig:vort_amr_day9}d) both have a clearly
+with Tag 1 (\ref{fig:vort_amr_day9}b) and Tag 2  (\ref{fig:vort_amr_day9}e) both have a clearly
 defined vortex ring that has begun to stretch and deform. However, they are more similar 
 in strength and appearance to the c512 uniform run at day 9 in Fig. \ref{fig:uni_d9nd12}b. 
 In addition, the vortex in the c64 Tag 1 run is slightly stronger and more deformed, reflecting the
 two day advantage provided by the Tag 1 criteria in which the c1024 AMR level is triggered at a lower threshold.
 
 The c128 and higher resolution base level AMR runs are able to capture the vortex roll-up
-effectively at day 9. The three AMR runs using Tag 2 refinement criteria, 
-c256/c1024 (Fig. \ref{fig:vort_amr_day9}c), c128 2-level AMR
-(Fig. \ref{fig:vort_amr_day9}e), and c256 2-level AMR (Fig. \ref{fig:vort_amr_day9}f,
-as well as the c512 1-level AMR Tag 4 refinement criteria run (Fig. \ref{fig:vort_amr_day9}i)
+effectively at day 9. The two AMR runs using Tag 2 refinement criteria, 
+c128 2-level AMR (Fig. \ref{fig:vort_amr_day9}b) and c256 2-level AMR (Fig. \ref{fig:vort_amr_day9}d,
 capture the collapse and roll-up of the vortex and closely match the day 9 vorticity magnitudes
 seen in the c1024 and c2048 uniform runs.
 The AMR runs are also able to resolve  the two areas of negative vorticity 
 on either side of the main vortex. However, the roll-up process in the AMR runs is slightly
 delayed compared to the high resolution uniform runs. The distinct comma-like positive vorticity 
-feature of the main vortex ring seen in the uniform c2048 (Fig. \ref{fig:c2048_vortseries}g) and c1024 (Fig. \ref{fig:uni_d9nd12}c) runs
+feature of the main vortex ring seen in the uniform c2048 
+(Fig. \ref{fig:c2048_vortseries}g) and c1024 (Fig. \ref{fig:uni_d9nd12}c) runs
 is not as prominently developed in these AMR runs. 
-An exception to this is observed in the c128 base 2-level AMR run with Tag 4. Seen in
-Fig. \ref{fig:vort_amr_day9}h, the vortex ring in this Tag 4 run (Fig. \ref{fig:vort_lineplot}d )
+The c128 base 2-level AMR run with Tag 3 in
+Fig. \ref{fig:vort_amr_day9}f is ab exception. The maximum vorticity 
 is approximately 25\% weaker than the c2048 uniform run and the vortex
-roll-up is slowed by half a day. Both the slight ring deformation and the northward extension of the positive vorticity filament 
+roll-up is slowed by half a day. Both the slight ring deformation and the northward 
+extension of the positive vorticity filament 
 from the northwest sector of the vortex ring correspond well to the structure of
 the vortices in the uniform c1024 and c2048 runs at 8.5 days. 
 
-Figure \ref{fig:vort_amr_day12} depicts the vorticity fields of the AMR runs after vortex ring collapse
-and spin-off of a smaller secondary vortex. The c256 and c512 base resolution AMR runs (Figs.
-\ref{fig:vort_amr_day12}c, f, and i) exhibit vorticity 
-maximums roughly 10\% higher than their corresponding high resolution 
-uniform runs reflecting Fig. \ref{fig:vort_lineplot}. These three AMR runs most closely resemble
-the formation and location of the secondary vortex and capture the anticyclonic
- filaments wrapping aground the main vortex.
-The six AMR runs with coarser base resolutions have lower peak magnitudes. The 
-vorticity fields for the c32 Tag 1 AMR run in Fig. \ref{fig:vort_amr_day12}a and the
-c128 Tag 3 AMR run in Fig. \ref{fig:vort_amr_day12} show delayed spin-offs of 
-the secondary vortex and less symmetric main vortices,
-comparable to day 10 of the c2048 uniform run in Fig. \ref{fig:c2048_vortseries}h.
-The c64 2-level AMR Tag 1 run in Fig. \ref{fig:vort_amr_day12}d has a vorticity 
+Figure \ref{fig:vort_amr_day12} depicts the vorticity fields 
+of the AMR runs at day 12 after vortex ring collapse
+and spin-off of a smaller secondary vortex. The c256
+2-level AMR with Tag 2 refinement run (Fig. \ref{fig:vort_amr_day12}d)
+captures the formation and location of the secondary vortex and the anticyclonic
+filaments wrapping aground the main vortex. In addition, the vortex maximum is
+roughly 10\% higher than c2048 uniform run maximum at day 12.
+Other AMR runs with c256 or higher were similarly able to 
+capture the strength and structure of the uniform high-resolution 
+runs regardless of which tagging criterion was used.
+For the coarser base resolutions, the AMR's ability to capture the resolutions
+present in the high resolution uniform runs is dependent on the tagging criteria.
+The vorticity field for the c32 Tag 1 AMR run in Fig. \ref{fig:vort_amr_day12}a, 
+in addition to being significantly weaker than the uniform c2048 run,
+shows a delayed spin-offs of  the secondary vortex and a less symmetric main vortex,
+more comparable to day 10 of the c2048 uniform run in Fig. \ref{fig:c2048_vortseries}h.
+The c64 2-level AMR Tag 1 run in Fig. \ref{fig:vort_amr_day12}b has a vorticity 
 maximum similar to the c1024 uniform reference. This AMR run also resolves 
 the secondary vortex, though its position is further to the northwest than that of the c1024 uniform run shown
 in Fig. \ref{fig:uni_d9nd12} at day 12. In contrast,
 the slightly higher threshold of Tag 2 refinement criteria 
-combined with the c64 2-level AMR run (Fig. \ref{fig:vort_amr_day12}g) 
+combined with the c64 2-level AMR run (Fig. \ref{fig:vort_amr_day12}e) 
 is unable to reproduce the secondary vortex spin-off. The
-c128 AMR runs depicted in Fig. \ref{fig:vort_amr_day12}e and h both demonstrate development of
-a secondary vortex, though the Tag 2 run is more chaotic.
-This is shown by the large negative voricity filament area around the Tag 2 run secondary vortex and a weak third cyclonic vortex.
-The anticyclonic filaments are also more defined for the c128 2-level AMR Tag 4 run (Fig. \ref{fig:vort_amr_day12}h)
-than the Tag 2 run in Fig. \ref{fig:vort_amr_day12}e.
+c128 AMR runs depicted in Fig. \ref{fig:vort_amr_day12}c and f both demonstrate development of
+a secondary vortex, though the Tag 2 run is more chaotic with a
+large negative vorticity filament area around the secondary vortex and a weak third cyclonic vortex.
+The anticyclonic filaments are also more defined for the c128 2-level AMR Tag 3 run (Fig. \ref{fig:vort_amr_day12}f)
+than the Tag 2 run in Fig. \ref{fig:vort_amr_day12}c. 
 
-Figure \ref{fig.grid_num_c128} shows the number of grid cells at each AMR 
-level as a function of time for both c128 2-level AMR runs.  While the lower 
-base level refinement threshold in Tag 2 results in the c512 level AMR being applied
-initially, refinement does not occur for two days with the Tag 4 criteria, at which time
-both levels of refinement are implemented due 
-to the constant threshold value. Though both levels are implemented,
-the c2048 refinement level 
-covers only the center core of the vortex and 
-the outer edges of the vortex remain at
-c512 or c128 resolution for another day.
-After day 3, the Tag 4 run has almost 10x more 
-cells than the Tag 2 run. That difference narrows significantly once the c2048
-level is triggered for the Tag 2 run after day 6. 
-Through the entire 16 day simulation, the Tag 2 run has more c512 grid
-cells while the Tag 4 run has more c2048 cells. Therefore, though the Tag 4 run
-has more grid cells and has triggered the c2048 refinement level for four days more than the 
-c128 2-level AMR Tag 2 run, the Tag 2 run better captures the vortex roll-up at day 9 
-(Figs. \ref{fig:vort_amr_day9}e and h).
+Table \ref{tb:grid_num_c128} compares
+the number of grid cells at each AMR level at 
+several days for both the Tag 2 and Tag 3 c128 2-level AMR runs.
+The Tag 2 run triggers the c512 refinement level initially
+where as the Tag 3 does not trigger any refinement until after day 2. 
+Once triggered however, the Tag 3 run has both c512 and c2048, 
+though the c2048 level does not cover the whole vortex until after day 3.
+By day 6, the Tag 3 run has roughly 4x more AMR grid cells than the Tag 2 run
+as the c2048 level is not triggered for the Tag 2 run until after day 6.
+Once Tag 2 triggers c2048, the cell difference narrows, but the Tag 3 run 
+still has more c2048 coverage throughout the simulation.
+However as Figs. \ref{fig:vort_amr_day9}c and f show, the Tag 2 run better captures the vortex roll-up at day 9.
 The c512 resolution gained earlier, in the first two days, appears to outweigh the benefits 
 of more c2048 resolution throughout the majority of the run time. 
-The benefit of that early advantage fades as the run continues, and the benefit of more coverage by
-the c2048 refinement level becomes apparent. By day 12 
+The benefit of that early advantage fades as the run continues, and the benefit of more coverage of
+the c2048 refinement level in the Tag 3 run becomes apparent. By day 12 
 the c128 Tag 2 run lacks the c2048 resolution around the core of the main 
-vortex needed to resolve the thin negative vorticity filaments (Fig. \ref{fig:vort_amr_day12}e), 
-which the Tag 4 run is able to capture (Fig. \ref{fig:vort_amr_day12}h). 
-The secondary vortex in the Tag 4 run also more closely resembles the uniform c2048 run.
+vortex needed to resolve the thin negative vorticity filaments (Fig. \ref{fig:vort_amr_day12}c), 
+which the Tag 3 run is able to capture (Fig. \ref{fig:vort_amr_day12}f). 
+The secondary vortex in the Tag 3 run also more closely resembles the uniform c2048 run
 
-A key delineation between these AMR runs is apparent 
+A key delineation between these AMR runs is  
 when c512 resolution or higher is implemented. At these 
 levels of refinement, the vortex undergoes the high resolution evolution regime.
 The AMR runs with tagging criteria that triggered refinement levels 
@@ -867,59 +814,6 @@ and the vortex eventually transition to the high resolution evolution
 regime. The critical vortex collapse merely occurs later in time and we
 see some of those AMR runs can catch-up to the 
 reference solution run by day 10 or 12.
-
-     \subsection{Extended Run Results}
-Extending the simulation time leads to development of an active and complex global flow pattern.
-The isolated vortex discussed in detail in the previous sections, as well as the binary
-pair of weaker vortices, evolve independently of each other for twelve days. 
-Beyond twelve days, the Rossby wave trains, though small in magnitude,
-spread and trigger evaporation and convection over a significant area.
-As a result, by day 16 of the simulation, a global chaotic flow has developed with multiple unseeded
-cyclonic and anticyclonic areas.  Additionally, jet-like features
-develop around the $30^\circ$N and S latitudes which correspond to the areas of transition between high and low moisture 
-as determined by the initial moisture field and reservoir.
-Figure \ref{fig:threevort_uni} depicts vorticity fields of all three vortices 
-at day 9 and day 12 as well as the resulting global vorticity field at day 16
-for uniform c256 (Fig. \ref{fig:threevort_uni}a), c512 (Fig. \ref{fig:threevort_uni}b),
-c1024 (Fig. \ref{fig:threevort_uni}c), and c2048 (Fig. \ref{fig:threevort_uni}d) resolution
-runs. The plots for day 9 and 12 are restricted to the three vortices as
-these are the primary features during that time frame. Day 16 plots depict the 
-global relative vorticity field. The overall flow, number of large-scale vortices,
-and vortex locations remain fairly consistent across the increasing uniform resolutions.
-The higher resolutions naturally resolve more fine-scale structures in this chaotic system, though
-the uniform c1024 and c2048 runs also resolve several small-scale vortices as can be observed around $15^\circ$N and $30^\circ$W and nearby anticyclonic patches The high maximum vorticity in the c2048 run at day 16 is from the cyclonic vortex centered near $15^\circ$N and $30^\circ$W.
-
-In addition to the uniform runs, we extend four AMR runs to 16 days of simulation. 
-The global vorticity fields at day 16 for these runs are plotted in 
-Fig. \ref{fig:vort_amr_day16}. The first column depicts the relative vorticity,
-while the second shows the block structure for the multiple AMR levels.
-All four AMR runs capture the overall jet-like flow of the system.
-The c64 base 2-level AMR run in Fig. \ref{fig:vort_amr_day16}a captures all the features
-with its intermediate AMR level. However, the highest c1024 level is limited to the main vortices
-and a few of the larger filaments. Thus much of the secondary flow and 
-small scale features in this chaotic system diverge from 
-the high resolution uniform runs. The c128 base
-2-level AMR run in Fig. \ref{fig:vort_amr_day16}b, the c256/c1024 AMR run in Fig. 
-\ref{fig:vort_amr_day16}c, and the 2-level c256/c512/c2048 AMR run in Fig.
-\ref{fig:vort_amr_day16}d all have a high resolution level over much of the critical areas that
-is better able to capture the small scale filaments and 
-features. The one key metric in which the latter 
-three AMR runs differ from their corresponding highest resolution
-uniform run is in the maximum vorticity. In the AMR runs, as in the c1024 and c2048 
-uniform runs, the vorticity maxima and minima are located in the small scale vortices
-that develop. However, these extremes for the AMR runs in Figs. 
-\ref{fig:vort_amr_day16}b, c, and d are more than double the values seen in the uniform runs.
-The $2.53 \times 10^{-3}\mathrm{s}^{-1}$ maximum in the c128 three-level run and
-the $3.81 \times 10^{-3}\mathrm{s}^{-1}$ maximum in the c256 three-level run arise
-from small-scale vortices covered by small patches of the 
-highest level of refinement.  The maximum in the c256/c1024 AMR run
-is equally large compared to its uniform run counterpart  
-($1.8 \times 10^{-3}\mathrm{s}^{-1}$) and is centered
-in a broad area of refinement that had been in place for several days. These vortices
-are well resolved with more than ten grid cells across and a significant buffer of refinement between the
-vortices and coarse-fine boundaries. Therefore it
-seems unlikely that these large vorticity values are being formed at AMR level boundaries.
-The cause is more likely to be the chaotic nature of this system at day 16.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Kessler-like Physics for Shallow Water Equations}
@@ -985,24 +879,17 @@ related constants like $q_{sat}$ are not associated with the
 typical physical units or value ranges used for
 such physical quantities.
 
-In this setup, only $q_v$ and $q_c$ are advected as 
-tracers as $q_{(k)}$ in Eq. \ref{eq:swkesqcon}. Once cloud moisture is transformed 
-into rain, the rain water is removed from the system. Processes such as rain evaporation and 
-accretion are neglected in this simplified model. The equations for 
-the processes and source terms for the moisture variables 
+The equations for 
+the physical processes and source terms for the moisture variables 
 ($S_q^{(1)}=S_{q_v}, \,\, S_q^{(2)}=S_{q_c}$) from Eq. \ref{eq:swkesqcon} 
-and temperature $S_\theta$ are from Eq. \ref{eq:swthetacon}.
-   \begin{eqnarray}
-     \Delta q_v & = & \frac{1}{\Delta t}\max \left[ 0, \gamma_v\left(q_v - q_{sat}\right)\right]\\
-     \Delta q_c & = & \frac{1}{\Delta t}\min\left[ q_c, \max \left[0, \gamma_v\left(q_{sat} - q_v \right)\right]\right] \\
-     \Delta q_r & = & \frac{1}{\Delta t}\max \left[ 0, \gamma_r\left(q_c - q_{precip}\right)\right]\\
-     S_{q_v} & = & \Delta q_c - \Delta q_v \\
-     S_{q_c} & = & \Delta q_v - \Delta q_c - \Delta q_r \\
-     S_{\theta} & = & L\left(\Delta q_v - \Delta q_c\right)\,.
-   \end{eqnarray}
-The constant $\gamma_r$ is the rain conversion rate and $L$ is a pseudo-latent heat 
-constant for the $\theta$ variable. As derived in \cite{zerroukat2015moist}, the 
- saturation threshold $q_{sat}(h, \theta)$ and $\gamma_v$, the $\theta$-dependent 
+and temperature $S_\theta$ from Eq. \ref{eq:swthetacon} are implemented
+directly from Equation 3.5 in \cite{zerroukat2015moist}.
+The one difference in the setup used here is that the rain water $q_r$ is removed 
+from the system, whereas in \cite{zerroukat2015moist} the $q_r$ 
+variable is advected around. In both setups, processes such as rain evaporation and 
+accretion are neglected in this simplified model. 
+As derived in \cite{zerroukat2015moist}, the 
+saturation threshold $q_{sat}(h, \theta)$ and $\gamma_v$, the $\theta$-dependent 
 conversion rate between vapor and cloud moisture, are:
    \begin{equation}
      \label{eq:qsat} q_{sat} = \frac{q_0}{gH}\exp{(20\theta)}
@@ -1107,15 +994,13 @@ a secondary long and narrow area along the western edge.
 
 \subsection{The moist barotropic instability with AMR}
   For our implementation of AMR in this moist shallow water
-system, we created three refinement tagging criteria. In addition to
-the previously used relative vorticity thresholds, two criteria based
-on the physics variable $q_c$ are used. The first $q_c$ based criterion is a 
-simple threshold of $q_c > 3.0 \times 10^{-5}$. The second cloud based 
-criterion is designed to track the leading edges of cloudy areas and is based on the relative gradient of $q_c$. 
-Its threshold is $|\nabla q_c| > 7.5\times 10^{-8}$ m$^{-1}$.
+system, we created two refinement tagging criteria. In addition to
+the previously used relative vorticity thresholds, a criterion based
+on the physics variable $q_c$ is used. It is a 
+simple threshold of $q_c > 3.0 \times 10^{-5}$. 
 The simple relative vorticity threshold is $|\zeta| > 2.3 \times 10^{-5}$ s$^{-1}$.
 
-Figure \ref{fig:amrqc} shows the $q_c$ field at day 6 for six AMR runs using the three
+Figure \ref{fig:amrqc} shows the $q_c$ field at day 6 for four AMR runs using the two
 AMR tagging criteria stated above. The left column in Fig.  \ref{fig:amrqc} shows the
 cloud field overlaid with the block structure of the AMR levels, while the right removes
 them for easier viewing of the cloud field. 
@@ -1133,72 +1018,59 @@ As a result of the larger area of refinement, this c64 AMR run achieves a simila
 uniform c256 run (Fig. \ref{fig:uniformqc}b). 
 
 For the c256 base resolution AMR runs with one-level of x4 refinement
-in Figs. \ref{fig:amrqc}c, d, and e, as well as the c128 base resolution two-level x4 
-refinement AMR run in Fig. \ref{fig:amrqc}f, the resolution over the jet is high enough
+in Figs. \ref{fig:amrqc}c and d, the resolution over the jet is high enough
 to avoid the wavenumber four grid imprinting. The $q_c$ fields for the
- three c256 base resolution AMR runs visually converge to the uniform c1024 run,
- albeit with some poorly resolved rings of low concentration along the edges of the main $q_c$ areas
- in the two AMR runs using the $q_c$ value and $q_c$ gradient tags. This structure
+three c256 base resolution AMR runs visually converge to the uniform c1024 run,
+albeit with some poorly resolved rings of low concentration cloud along the edges 
+of the main $q_c$ areas. This structure
 corresponds to the coarse-fine grid boundary, though it is caused by a response to the increased
 resolution rather than a computational artifact of the grid itself.
 In the c128 and c256 uniform runs, the main filaments of cloud in Figs. \ref{fig:uniformqc}a and b
 are buttressed by thin parallel low density cloud filaments. These secondary filaments are either reduced 
 in size or no longer present in the higher resolution uniform runs. In the AMR runs, the coarse-fine
 boundary intersects these secondary filaments, causing the patchwork pattern seen in
-Fig. \ref{fig:amrqc}b, c, and d. It is less pronounced in Fig. \ref{fig:amrqc}e because the vorticity 
-tagging threshold triggers refinement over a broader area, providing a buffer-like effect. The c128 two-level
-AMR run with vorticity tagging has a highest refinement level of c2048 over most of the jet for the duration of
-the model run time. Its $q_c$ field at day 6, seen in Fig. \ref{fig:amrqc}f, depicts levels of cloud 
-concentration (denoted by the orange and yellow contours) which are more comparable to the uniform c1024 run.
+Fig. \ref{fig:amrqc}b and c. It is less pronounced in Fig. \ref{fig:amrqc}d because the vorticity 
+tagging threshold triggers refinement over a broader area, providing a buffer-like effect.
 
 The same comparison to uniform runs can be made for the 12 hour $q_r$ accumulation
 at day 6 of the six AMR runs pictured in Fig. \ref{fig:amrqrdt}. The AMR grid structure is the same
 as in Fig. \ref{fig:amrqc}, so the block structure is not shown in these plots. The overall structure
 of the accumulation compares to uniform runs for the $q_c$ field.
 The area and magnitude of heaviest accumulation correspond well to the uniform resolution runs,
-with the same resolution as the highest resolution AMR runs; the c128 1-level AMR run
-in Fig. \ref{fig:amrqrdt}f is again more similar to the uniform c1024 run rather than the c2048 run.
-One key difference is observed in the 
-c256 AMR run tagging on $q_c$ gradient in Fig. \ref{fig:amrqrdt}d. For this AMR run, the
- area of higher accumulation on the eastern side of the front
-system, centered near $-90^\circ$ longitude,
-is disjointed and compressed compared to the larger and smoother structure of accumulation in
-the corresponding c1024 uniform run in Fig. \ref{fig:uniformqc}d.
-With the $q_c$ gradient tagging, the interior areas of the large troughs have no high resolution refinement. 
-This results in this precipitation accumulation structure observed 
-as the coarser resolution has lower levels of accumulation.
-Another contrast is seen in the c128 and c256 AMR runs, which have large areas of low-level accumulation noise 
-on the western sides of the two largest troughs. The noise is most pronounced in the three
-$q_c$ tagging runs (Figs. \ref{fig:amrqrdt}b,c, and d), though present over a smaller area in vorticity tagging runs, 
-specifically Fig. \ref{fig:amrqrdt}e and f. A lower cloud concentration threshold may reduce the noisy low-level edges, extending refinement out beyond the cloud formation areas.
+with the same resolution as the highest resolution AMR runs.
+A contrast is seen in the c128 and c256 AMR runs $q_c$ tagging runs (Figs. \ref{fig:amrqrdt}b and c),
+ which have large areas of low-level accumulation noise 
+on the western sides of the two largest troughs. Though it is also present over a 
+smaller area in vorticity tagging runs, specifically Fig. \ref{fig:amrqrdt}d. 
+A lower cloud concentration threshold may reduce 
+the noisy low-level edges, extending refinement out beyond the cloud formation areas.
 
 %%%%%%%%%%%%%%%
 \section{Conclusion}
 \label{sec:conclusion2}
-We implemented two different forcing schemes designed to 
+In this paper, we implemented two different forcing schemes to 
 mimic the effects of moisture in the atmosphere within a 2D 
-shallow water system in a fourth-order finite-volume model
-that is adaptive in both space and time. The first moist physics
+shallow water system. These schemes add complexity to the 
+shallow water system and creates dynamic features than
+can benefit from use of AMR. The first moist physics
 framework adds a water vapor variable and models convection
 as a mass sink triggered by saturation. We implemented a
-strengthening vortex test case with this setup.  In the second
+strengthening vortex test case with this setup. In the second
 forcing framework, a more complex moisture representation
 is used, consisting of vapor, cloud, and rain variables.
 The effects of moisture were coupled to the momentum equations
 through a potential temperature variable, linked to
-the moisture variables through latent heat. The model used
+the moisture variables through latent heat. We used
 this setup with the barotropic instability test case. 
-With both forcing systems and test cases, we observe
-the evolution of features of interest at various resolutions and 
-with differential refinement strategies. 
-We also investigate AMR's effect on the physics 
-forcing as grid resolutions changed.
+Using the fourth-order finite-volume model Chombo AMR model,
+we implemented the two test cases in a series 
+of uniform resolution and AMR simulations. 
 These simulations can aid the
 establishment of guidelines for effective AMR refinement criteria.
 
-The resolution
-dependency of the physics forcing schemes were relatively mild.
-In the Kessler-like
+The series of uniform simulations
+show that the evolution of the features of interest converges
+with increasing resolution for both test cases. In the Kessler-like
 moisture scheme with the barotropic instability test, 
 the overall structure of the moisture variables converged quickly
 with increasing resolution, though the concentration of clouds and
@@ -1208,24 +1080,28 @@ two-regime vortex evolution structure. For resolutions c512 and greater,
 we observed a convergence of vortex's shape and structure. Though
 the maximum wind speed and relative
 vorticity continued to slowly increase with resolution.
+
+With both forced shallow water test cases, we investigated
+the effectiveness of different AMR strategies and AMR's effect on the physics 
+forcing it self as grid resolutions changed.
 The forcing in both cases functioned effectively across the varying
 resolutions and multiple levels of AMR. The coarse-fine interfaces
-did not induce noise or significant distortion 
-
-The sensitivity to resolution and AMR refinement criteria was much
+did not induce noise or significant distortion. With regards to refinement
+strategies, the sensitivity to AMR refinement criteria was much
 more pronounced in the strengthened vortex setup.
 The response of the moist barotropic wave test case to 
 AMR refinement criteria was fairly consistent; changes in criteria
 did not significantly alter the growth and structure of clouds and rain within the wave,
 so long as the initial refinement adequately resolved the wave to avoid
 computational grid artifacts. Any additional refinement was effective.
+
 In the strengthening vortex test case, the strength and evolution 
 of the central vortex ring were quite sensitive to initial resolution and the time point at which
-AMR levels are triggered. Though the vortex does not strengthen 
-significantly or undergo rapid structural changes during the first few days, 
-we observed that AMR runs with solutions most similar to the uniform high
-resolution runs had some initial levels of refinement either initially (at least c256) or within
-the first day (at least c512). The vortices in these runs evolved at a comparable rate
+AMR levels are triggered, though the vortex does not strengthen 
+significantly or undergo rapid structural changes during the first few days.
+We observed that AMR runs with solutions most similar to the uniform high
+resolution runs had some initial levels of refinement either initially or within
+the first day. The vortices in these runs evolved at a comparable rate
 and strength to those in the uniform run with the same resolution
 as the highest AMR level, even if that level was not triggered until several days later.
 AMR not added initially was still beneficial.
@@ -1236,17 +1112,20 @@ The time window in which AMR would trigger this process was limited.
 If high resolution AMR was not triggered until many days into the simulation, 
 the AMR solution diverged from the high resolution runs.
 
-Both sets of simulations show the starting grid resolution must be
+Both test case simulation demonstrate that 
+the starting grid resolution must be
 able to adequately resolve the features of interest to maximize
-AMR effectiveness. AMR cannot remove the errors
+AMR effectiveness. AMR cannot correct errors
 caused before refinement begins. Additional refinement with
-AMR beyond that base level did improve the model, especially
+AMR beyond that base level did improve the model, particularly 
 with regards to the small scale vorticity features in the strengthen vortex.
-To obtain this early refinement with AMR, the tagging
+To obtain early refinement with AMR, the tagging
 criteria must be tailored to properties uniquely associated
 with the origins of the feature of interest, which is difficult even in these 
-idealized shallow water systems, or must use a combination of initial static refinement 
-and AMR. For example, in tracking and resolving TCs in a realistic climate simulation, a static region of refinement
+idealized shallow water systems.  An alternative technique is to use 
+a combination of initial static refinement and AMR. 
+For example, in tracking and resolving tropical cyclones in a realistic 
+climate simulation, a static region of refinement
 could be placed over regions of cyclogenesis. Any storms that
 develop could be further refined with AMR tagging on
 surface pressure and followed as they traverse
@@ -1261,7 +1140,16 @@ similarly simplified physics parameterization schemes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 \acknowledgments
-Start acknowledgments here.
+Support for this work has been provided by the 
+Office of Science, U.S. Department of
+Energy, Award DE-SC0003990, a University of Michigan (UM) 
+Rackham Predoctoral Fellowship and a UM Catalyst grant from 
+the Michigan Institute for Computational Discovery and 
+Engineering (MICDE). We would like to acknowledge 
+high-performance computing support from Cheyenne 
+(doi:10.5065/D6RX99HX) provided by NCAR's Computational 
+and Information Systems Laboratory, sponsored by the National 
+Science Foundation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % APPENDIXES
@@ -1337,6 +1225,34 @@ Start acknowledgments here.
     \end{center}
 \end{table}
 
+\begin{table}[p]
+  \caption{
+  A snapshot of the number of grid cells per refinement level every three days
+  for the two c128 2-level AMR runs using Tag 2 and Tag 3 refinement criteria.
+  %For the Tag 2 run, the first AMR level of c512 resolution cells is triggered 
+  %at the beginning of the simulation, while the second level of c2048 resolution cells
+  %is not triggered until after day 6. For the Tag 3 run, both the c512 and c2048 resolution
+  %levels are triggered after day 2.
+  }
+  \label{tb.grid_num_c128}
+  \begin{center}
+  \begin{tabular}{l |cc| cc}
+          %
+          \multicolumn{1}{c}{} & \multicolumn{4}{c}{Number of Cells per AMR Level} \\ 
+          \multicolumn{1}{c|}{} & \multicolumn{2}{c|}{c128 2-level AMR Tag 2 run} & \multicolumn{2}{c}{c128 2-level AMR Tag 3 run} \\ 
+          Time 	& c512 level 	& c2048 level 	& c512 level 	& c2048 level \\
+          \hline
+          \hline
+          Day 0	& $1.03 \times 10^4$ & - 					& - 					& - \\
+          Day 3	& $1.43 \times 10^4$ & -					& $3.90 \times 10^3$	& $1.18 \times 10^4$ \\
+          Day 6	& $2.14 \times 10^4$ & -					& $1.56 \times 10^4$	& $7.51 \times 10^4$ \\
+          Day 9	& $3.07 \times 10^4$ & $8.10 \times 10^4$	& $1.87 \times 10^4$	& $1.24 \times 10^5$ \\
+          Day 12	& $7.67 \times 10^4$ & $1.46 \times 10^5$	& $4.31 \times 10^4$	& $3.22 \times 10^5$ \\
+          \hline
+   \end{tabular}
+   \end{center}
+\end{table}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % FIGURES
@@ -1375,34 +1291,27 @@ Start acknowledgments here.
     \label{fig:c2048_day8}
 \end{figure}
 
-\begin{figure}
-    \centerline{%
-    \noindent
-    \includegraphics[width=\textwidth]{Figures/c2048_day10_plots-01.eps}}
-   \caption{Day 10 plots for the uniform c2048 run of the isolated strengthening vortex for several variables: 
-   (a) Height field (m), (b) Wind magnitude (m s$^{-1}$), (c) Instantaneous precipitation rate (moisture value per day), 
-   and (d) Reservoir moisture content (moisture value).
-   These plot correspond to the day 10 vorticity plot in Fig. \ref{fig:c2048_vortseries}(h), though
-    note the different latitude-longitude domain in these plots. }%
-    \label{fig:c2048_day10}
-\end{figure}
+%\begin{figure}
+%    \centerline{%
+%    \noindent
+%    \includegraphics[width=\textwidth]{Figures/c2048_day10_plots-01.eps}}
+%   \caption{Day 10 plots for the uniform c2048 run of the isolated strengthening vortex for several variables: 
+%   (a) Height field (m), (b) Wind magnitude (m s$^{-1}$), (c) Instantaneous precipitation rate (moisture value per day), 
+%   and (d) Reservoir moisture content (moisture value).
+%   These plot correspond to the day 10 vorticity plot in Fig. \ref{fig:c2048_vortseries}(h), though
+%    note the different latitude-longitude domain in these plots. }%
+%    \label{fig:c2048_day10}
+%\end{figure}
 
 \begin{figure}
    \centerline{%
    \noindent
    \includegraphics[width=\textwidth]{Figures/vortmax_lineplot.eps}}
    \caption{Maximum relative vorticity of the strengthening vortex over a 
-   period of 13 days for (a) uniform runs, (b) AMR runs using the Tag 1 or
-   Tag 3 refinement criteria, (c) AMR runs using the Tag 2 criteria, and (d)
-   AMR runs using the Tag 4 criteria. All the plots follow a line color and marker
-   system dependent on resolution. The line color denotes the run's base resolution
-   while the line style denotes the run's highest AMR resolution. The line color and
-   style for each resolution is as follows: c2048 (black, plane), c1024 (blue, solid diamond markers),
-   c512 (green, small circle markers), c256 (red, dot-dash line), and c128 (orange, dotted line).
-   The coarse resolutions c64 and c32 have only a line color, light blue and pink respectively, and
-   no line style as none of the AMR runs have a highest refinement at these resolutions given that
-   the vortex does not develop on such a coarse grid (as seen by the c64 uniform run in (a)).
-   For comparison purposes the uniform run lines from (a) have been imposed in light grey on
+   period of 13 days for (a) uniform runs, (b) AMR runs using the Tag 1
+    refinement criteria, (c) AMR runs using the Tag 2 criteria, and (d)
+   AMR runs using the Tag 3 criteria. For comparison purposes the 
+   uniform run lines from (a) have been imposed in light grey on
    the other three plots.
    }
    \label{fig:vort_lineplot}
@@ -1426,19 +1335,19 @@ Start acknowledgments here.
    \centerline{%
    \noindent
    \includegraphics[width=\textwidth]{Figures/day9_vort-01.eps}}
-   \caption{Relative vorticity fields at day 9 for several AMR runs of the 
-   strengthening vortex case. (a) c32 base 4-level AMR run with x4 
-   refinement using Tag 1. (b) c128 base 2-level AMR run with
-   x4 refinement using Tag 3.
-   (c) c256 base 1-level AMR run with x4 refinement using Tag 2.
-   (d) c64 base 2-level AMR run with x4 refinement using Tag 1.
-   (e) c128 base 2-level AMR run with x4 refinement using Tag 2.
-   (f) c256 base 2-level AMR run with one level of x2 refinement 
-   and one of x4 refinement using Tag 2.
-   (g) c64 base 2-level AMR run with x4 refinement using Tag 2.
-   (h) c128 base 2-level AMR run with x4 refinement using Tag 4.
-   (i) a c512 base 1-level AMR run with x4 refinement using Tag 4. These plots
-   correspond to the day 9 uniform plots in Fig. \ref{fig:c2048_vortseries}g and
+   \caption{Relative vorticity fields at day 9 for six AMR runs of the 
+   strengthening vortex case. %(a) c32 base 4-level AMR run with x4 
+   %refinement using Tag 1. (b) c128 base 2-level AMR run with
+   %x4 refinement using Tag 3.
+   %(c) c256 base 1-level AMR run with x4 refinement using Tag 2.
+   %(d) c64 base 2-level AMR run with x4 refinement using Tag 1.
+   %(e) c128 base 2-level AMR run with x4 refinement using Tag 2.
+   %(f) c256 base 2-level AMR run with one level of x2 refinement 
+   %and one of x4 refinement using Tag 2.
+   %(g) c64 base 2-level AMR run with x4 refinement using Tag 2.
+   %(h) c128 base 2-level AMR run with x4 refinement using Tag 4.
+   %(i) a c512 base 1-level AMR run with x4 refinement using Tag 4. 
+   These plots correspond to the day 9 uniform plots in Fig. \ref{fig:c2048_vortseries}g and
    \ref{fig:uni_d9nd12}(a)-(c). The block structures of the multiple refinement
    levels are outlined in black
    }
@@ -1458,61 +1367,61 @@ Start acknowledgments here.
    \label{fig:vort_amr_day12}
 \end{figure}
 
-\begin{figure}
-   \centerline{%
-   \noindent
-   \includegraphics[width=\textwidth]{Figures/c128_3l4_Tag2vs4_compare.eps}}
-   \caption{The growth of AMR grid cells over time for the two c128 2-level AMR runs 
-   with tag 2 and tag 4 refinement criteria. The base level c128 grid cells are excluded
-   while the 2nd level c512 cells are plotted in blue and the third level c2048 cells are
-   plotted in red with a plus marker to denote the tag 4 run and a circle to denote the
-   tag 2 run.  The sum of the two levels are plotted in black with a triangle marker denoting
-   the tag 4 run and an asterisk marking the tag 2 run. 
-   }
-   \label{fig.grid_num_c128}
-\end{figure}
+%\begin{figure}
+%   \centerline{%
+%   \noindent
+%   \includegraphics[width=\textwidth]{Figures/c128_3l4_Tag2vs4_compare.eps}}
+%   \caption{The growth of AMR grid cells over time for the two c128 2-level AMR runs 
+%   with tag 2 and tag 4 refinement criteria. The base level c128 grid cells are excluded
+%   while the 2nd level c512 cells are plotted in blue and the third level c2048 cells are
+%   plotted in red with a plus marker to denote the tag 4 run and a circle to denote the
+%   tag 2 run.  The sum of the two levels are plotted in black with a triangle marker denoting
+%   the tag 4 run and an asterisk marking the tag 2 run. 
+%   }
+%   \label{fig.grid_num_c128}
+%\end{figure}
+
+%\begin{figure}
+%   \centerline{%
+%   \noindent
+%   \includegraphics[width=\textwidth]{Figures/global_uni_vort-01.eps}}
+%   \caption{Late run evolution of the relative vorticity field for the 
+%   strengthening vortex case with three initialized vortices. These plots show
+%   the growth of a global chaotic regime by day 16 in for uniform resolution
+%   runs. Relative vorticity snapshots at days 9 (left column), 12 (middle column), 
+%   and 16 (right column) are given for
+%   (a) uniform c256 run, (b) uniform c512 run, (c) uniform c1024 run, and
+%   (d) uniform c2048 run. The leftmost vortex in the days 9 and 12 plots
+%   located around $(30^\circ \mathrm{N}, 15^\circ \mathrm{W})$ is the isolated
+%   vortex discussed in previous sections. The two vortices centered around
+%   $(20^\circ \mathrm{N}, 90^\circ \mathrm{E})$ are the binary pair. Note: the
+%   vorticity extrema occur in the isolated vortex in all cases for days 9 and 12 so they are 
+%   not displayed.}
+%   \label{fig:threevort_uni}
+%\end{figure}
+
+%\begin{figure}
+%   \centerline{%
+%   \noindent
+%   \includegraphics[width=\textwidth]{Figures/day16_vort-01.eps}}
+%   \caption{Relative vorticity fields at day 16 for four AMR runs of the strengthening
+%   vortex case with three initialized vortices: 
+%   (a) c64 base 2-level AMR run with x4 refinement using Tag 2,
+%   (b) c128 base 2-level AMR run with x4 refinement using Tag 2,
+%   (c) c256 base 1-level AMR run with x4 refinement using Tag 2,
+%   and (d) c256 base 2-level AMR run with one level of x2 refinement 
+%   and one of x4 refinement using Tag 2. The left column depicts the vorticity 
+%   field at day 16 while the right column overlays
+%   the block structures of the refinement levels in black. These plots
+%   are comparable to the day 16 plots in Fig. \ref{fig:threevort_uni}.
+%   }
+%   \label{fig:vort_amr_day16}
+%\end{figure}
 
 \begin{figure}
    \centerline{%
    \noindent
-   \includegraphics[width=\textwidth]{Figures/global_uni_vort-01.eps}}
-   \caption{Late run evolution of the relative vorticity field for the 
-   strengthening vortex case with three initialized vortices. These plots show
-   the growth of a global chaotic regime by day 16 in for uniform resolution
-   runs. Relative vorticity snapshots at days 9 (left column), 12 (middle column), 
-   and 16 (right column) are given for
-   (a) uniform c256 run, (b) uniform c512 run, (c) uniform c1024 run, and
-   (d) uniform c2048 run. The leftmost vortex in the days 9 and 12 plots
-   located around $(30^\circ \mathrm{N}, 15^\circ \mathrm{W})$ is the isolated
-   vortex discussed in previous sections. The two vortices centered around
-   $(20^\circ \mathrm{N}, 90^\circ \mathrm{E})$ are the binary pair. Note: the
-   vorticity extrema occur in the isolated vortex in all cases for days 9 and 12 so they are 
-   not displayed.}
-   \label{fig:threevort_uni}
-\end{figure}
-
-\begin{figure}
-   \centerline{%
-   \noindent
-   \includegraphics[width=\textwidth]{Figures/day16_vort-01.eps}}
-   \caption{Relative vorticity fields at day 16 for four AMR runs of the strengthening
-   vortex case with three initialized vortices: 
-   (a) c64 base 2-level AMR run with x4 refinement using Tag 2,
-   (b) c128 base 2-level AMR run with x4 refinement using Tag 2,
-   (c) c256 base 1-level AMR run with x4 refinement using Tag 2,
-   and (d) c256 base 2-level AMR run with one level of x2 refinement 
-   and one of x4 refinement using Tag 2. The left column depicts the vorticity 
-   field at day 16 while the right column overlays
-   the block structures of the refinement levels in black. These plots
-   are comparable to the day 16 plots in Fig. \ref{fig:threevort_uni}.
-   }
-   \label{fig:vort_amr_day16}
-\end{figure}
-
-\begin{figure}
-   \centerline{%
-   \noindent
-   \includegraphics[height=.9\textheight]{Figures/A_c2048_allvar-01}}
+   \includegraphics[height=.9\textheight]{Figures/A_c2048_allvar_zoom-01}}
    \caption{Day 6 snapshots of the evolving barotropic wave for the c2048 uniform 
    run's (a) temperature field, (b) $q_v$ moisture field, (c) $q_c$ cloud field, (d) past 12-hour 
    accumulation of the $q_r$ precipitated water field. The solid and dashed black contour
@@ -1539,7 +1448,7 @@ Start acknowledgments here.
 \begin{figure}
    \centerline{%
    \noindent
-   \includegraphics[height=.9\textheight]{Figures/A_qrdt_uniform-01}}
+   \includegraphics[width=19pc]{Figures/A_qrdt_uniform_zoom-01}}
    \caption{Plots depicting the 12-hour accumulation in the $q_r$ precipitated water field for
    (a) c128, (b) c256, (c) c512, and (d) c1024 uniform runs. The c2048 uniform run
    plot of the same field in Fig. \ref{fig:c2048allvar}d serves as a reference.
@@ -1553,14 +1462,11 @@ Start acknowledgments here.
 \begin{figure}
    \centerline{%
    \noindent
-   \includegraphics[height=.75\textheight]{Figures/A_amr_qc-01}}
-   \caption{The cloud $q_c$ field profile at day 6 for several AMR runs.  The left column overlays
-   the $q_c$ variable with the block structures of the refinement levels in black, while the right columns
-   removes these AMR blocks so that the $q_c$ field can be viewed more clearly. 
-  (a) - (e) depict AMR runs with one level of x4 refinement while (f) depicts an AMR run with two levels
-  of x4 refinement. The tagging criterion for (a), (e), and (f) is a relative vorticity threshold of
-  $|\zeta| > 2.3 \times 10^{-5}$ s$^{-1}$. The criterion for (b) and (c) is $q_c > 3.0\times 10^{-5}$,
-  and the criterions for the AMR run in (d) is $|\nabla q_c | > 7.5\times 10^{-8}$ km$^{-1}$.
+   \includegraphics[height=.85\textheight]{Figures/A_amr_qc-01}}
+   \caption{The cloud $q_c$ field profile at day 6 for several AMR runs with one level of x4 refinement. 
+  The tagging criterion for (a) and (d) is a relative vorticity threshold of
+  $|\zeta| > 2.3 \times 10^{-5}$ s$^{-1}$. The criterion for (b) and (c) is $q_c > 3.0\times 10^{-5}$.
+   The block structures of the refinement levels are outlined in black.
    }
    \label{fig:amrqc}
 \end{figure}
@@ -1568,7 +1474,7 @@ Start acknowledgments here.
  \begin{figure}
    \centerline{%
    \noindent
-   \includegraphics[height=.75\textheight]{Figures/A_amr_qrdt_zoom-01}}
+   \includegraphics[width=19pc]{Figures/A_amr_qrdt_zoom-01}}
    \caption{Past 12-hour accumulation of $q_r$ at day 6 for the AMR runs depicted in Fig. \ref{fig:amrqc}.
    }
    \label{fig:amrqrdt}
